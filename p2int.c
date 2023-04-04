@@ -203,7 +203,7 @@ void paragens()
         else
             
         leAteFinalLinha(_buffer);
-    }
+    }free(s);
 }
 
 
@@ -407,6 +407,10 @@ void carreiras()
             printf("incorrect sort option.\n");
         leAteFinalLinha(_buffer);
     }
+    free(s);
+    free(_buffer);
+
+    
 }
 
 
