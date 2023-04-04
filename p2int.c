@@ -409,7 +409,6 @@ void carreiras()
     }
     free(s);
     free(_buffer);
-
     
 }
 
