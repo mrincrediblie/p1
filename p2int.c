@@ -413,7 +413,16 @@ void carreiras()
 }
 
 
-
+void apaga(){
+    Paragem* p = NULL;
+    while(p != NULL){
+        p = listaParagens;
+        if (p->next == NULL)
+            free(p);
+        listaParagens = listaParagens->next;
+        free(p);
+    }
+}
 int main()
 {
     int c;
@@ -436,6 +445,7 @@ int main()
             
             break;
         case 'q':
+            apaga();
             break;
         default:
             /* Ignorar linhas em branco */
