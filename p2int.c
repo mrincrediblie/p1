@@ -491,8 +491,7 @@ void acrescentaLigacaoInicio(Carreira* carreira, Ligacao* ligacao) {
 void adicionaCarreiraParagem(Paragem* paragem, Carreira* carreira) {
     int i;
     for (i = 0; i < paragem->numCarreiras; i++) {
-        if (strcmp(paragem->carreiras[i]->nome, carreira->nome)) {
-            printf("AVISO: paragem ja associada a carreira.\n");
+        if (strcmp(paragem->carreiras[i]->nome, carreira->nome) == 0) {
             return;
         }
     }
@@ -557,7 +556,7 @@ void adicionaLigacao(Ligacao** head, Ligacao** tail, Carreira* c, Paragem* pOrig
 */
 void ligacoes()
 {
-    printf("estou no ligacoes\n");
+    
     char* nomeCarreira;
     char*  nomeOrigem;
     char* nomeDestino;
@@ -565,7 +564,7 @@ void ligacoes()
     Carreira* carreira;
     Paragem* pOrigem;
     Paragem* pDestino;
-    printf("inicializei tudo\n");
+    
     leEspacos();
     nomeCarreira = leNome();
     leEspacos();
@@ -603,7 +602,7 @@ void ligacoes()
     free(nomeOrigem);
     free(nomeDestino);
 }
-
+/*
 void ordenaCarreiras(Carreira** carreiras, int numCarreiras) {
     Carreira* c = NULL;
     int i, j, houveTroca = VERDADE;
@@ -620,7 +619,22 @@ void ordenaCarreiras(Carreira** carreiras, int numCarreiras) {
 	}
     }
 }
-
+*/
+void ordenaCarreiras(Carreira** carreiras, int numCarreiras) {
+    int i, j, houveTroca = VERDADE;
+    for (i = 0; houveTroca && i < numCarreiras-1; i++) {
+        houveTroca = FALSO;
+        for (j = 0; j < numCarreiras-1-i; j++) {
+            if (strcmp(carreiras[j]->nome, carreiras[j+1]->nome) > 0) {
+                Carreira* aux = carreiras[j];
+                carreiras[j] = carreiras[j+1];
+                carreiras[j+1] = aux;
+                houveTroca = VERDADE;
+            }
+        }
+    }
+}
+/*
 void intersecoes() {
     int i, c, idCarreira, numCarreiras;
 
@@ -639,8 +653,30 @@ void intersecoes() {
         }
     }
 }
-void intersecoes() {
-    Paragem* p = NULL;
+*/
+void intersecoes(Paragem** listaParagens) {
+    
+    Paragem* p = *listaParagens;
+    int i, c, numCarreiras;
+    Carreira** carreiras;
+
+    while(p != NULL){
+        numCarreiras = p->numCarreiras;
+        if (numCarreiras > 1) {
+            printf("%s %d:", p->nome, numCarreiras);
+            carreiras = p->carreiras;
+            ordenaCarreiras(carreiras, numCarreiras);
+            for (c = 0; c < numCarreiras; c++) {
+                printf(" %s", carreiras[c]->nome);
+            }
+            printf("\n");
+        }
+        p = p->next;
+    }
+}
+/*
+void intersecoes(Paragem** paragens) {
+    Paragem* p = *paragens;
     int i, c, idCarreira, numCarreiras;
 
     //leAteFinalLinha(_buffer);
@@ -657,8 +693,8 @@ void intersecoes() {
             printf("\n");
         }
     }
-    }
 }
+*/
 
 void apaga(){
     Paragem* p = NULL;
@@ -689,7 +725,7 @@ int main()
             ligacoes();
             break;
         case 'i':
-            
+            intersecoes(&listaParagens);
             break;
         case 'q':
             apaga();
