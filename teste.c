@@ -14,7 +14,7 @@ char* leNome()
             s = realloc(s, i + 1);
             s[i++] = c;
         }
-        ungetc(c, stdin);
+        
     }
     else
     {
