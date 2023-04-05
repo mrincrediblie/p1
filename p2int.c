@@ -55,7 +55,7 @@ struct carreira
 
 /* Variaveis Globais */
 
-char* _buffer; /* Buffer auxiliar. */
+char* _buffer = NULL; /* Buffer auxiliar. */
 
 /* Variáveis para guardar paragens, ligações e carreiras. */
 
@@ -87,14 +87,24 @@ char* leNome()
         i = 1;
         while ((c = getchar()) != ' ' && c != '\t' && c != '\n'){
             s = realloc(s, i + 1);
+            if (s == NULL){
+                printf("erro ao alocar memoria\n");
+                exit(1);
+            }
             s[i++] = c;
-        }
-        
+
+        }        
+        ungetc(c, stdin);
     }
+    
     else
     {
         while ((c = getchar()) != '"'){
             s = realloc(s, i + 1);
+            if (s == NULL){
+                printf("erro ao alocar memoria\n");
+                exit(1);
+            }
             s[i++] = c;
         }
     }
@@ -148,7 +158,7 @@ Paragem *encontraParagem(Paragem *listaParagens, char *nome)
 /* Cria uma nova paragem. */
 
 void criaParagem(Paragem** head, Paragem** tail, char *nomeParagem, double latitude, double longitude)
-{
+{     
     Paragem *novaParagem = (Paragem *)malloc(sizeof(Paragem));
     novaParagem->latitude = latitude;
     novaParagem->longitude = longitude;
@@ -161,7 +171,6 @@ void criaParagem(Paragem** head, Paragem** tail, char *nomeParagem, double latit
         novaParagem->prev = NULL;
         *head = novaParagem;
         *tail = novaParagem;
-        printf("p esta vazio\n");
     }
     else {
         novaParagem->prev = *tail;
@@ -209,7 +218,7 @@ void paragens()
 //carreiras ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 void mostraCarreira(Carreira* c)
-{   printf("estou no mostra carreira");
+{   
     int numLigacoes = c->numLigacoes;
 
     printf("%s ", c->nome);
@@ -285,9 +294,7 @@ void listaAsCarreiras(Carreira* listaCarreiras)
 
 }
 
-
 Carreira* encontraCarreira(Carreira* listaCarreiras, char nome[]) { 
-    
     Carreira *c = listaCarreiras;
     while (c != NULL)
     {
@@ -298,8 +305,6 @@ Carreira* encontraCarreira(Carreira* listaCarreiras, char nome[]) {
     }
     return NULL;
 }
-
-
 
 int encontraParagemCarreira(Carreira* c, Paragem* p)
 {
@@ -320,27 +325,26 @@ int encontraParagemCarreira(Carreira* c, Paragem* p)
 }
 
 
-void criaCarreira(Carreira** head, Carreira** tail, char nomeCarreira[])
+void criaCarreira(Carreira** head, Carreira** tail, char *nomeCarreira)
 {
-    printf("estou no criaCarreira\n");
-    Carreira *novaCarreira = (Carreira*) malloc(sizeof(Carreira));
+    
+    Carreira *novaCarreira = (Carreira *) malloc(sizeof(Carreira));
     if (novaCarreira == NULL)
     {
         printf("Erro ao criar nova carreira\n");
         return;
     }
-    strcpy(novaCarreira->nome, nomeCarreira);
     novaCarreira->custoTotal = 0.0;
     novaCarreira->duracaoTotal = 0.0;
     novaCarreira->numLigacoes = 0;
     novaCarreira->ligacoes = NULL;
+    novaCarreira->nome = (char*) malloc(sizeof(char)*(strlen(nomeCarreira)+1));
+    strcpy(novaCarreira->nome, nomeCarreira);
     novaCarreira->next = NULL;
     if (listaCarreiras == NULL){
         novaCarreira->prev = NULL;
         listaCarreiras = novaCarreira;
         *tail = novaCarreira;
-        printf("p esta vazio\n");
-       
     }
     else {
         novaCarreira->prev = *tail;
@@ -348,6 +352,7 @@ void criaCarreira(Carreira** head, Carreira** tail, char nomeCarreira[])
         *tail = novaCarreira;
         
     }
+    
      
 }
 
@@ -371,34 +376,43 @@ int verificaInversoOk(char s[])
 
 void carreiras()
 {
+    
     char* s = NULL;
     Carreira *c = NULL;
     int fimLinha = leEspacos();
 
     if (!fimLinha)
-    {
+    {   
         listaAsCarreiras(listaCarreiras);
         return;
     }
-
     s = leNome();
     c = encontraCarreira(listaCarreiras, s);
+   
     fimLinha = leEspacos();
     if (!fimLinha)
-    {
-        if ((c = encontraCarreira(listaCarreiras, s)) == NULL)
+    {  
+        if ((c = encontraCarreira(listaCarreiras, s)) == NULL){
+            
             criaCarreira(&listaCarreiras, &tailListaCarreiras, s);
-        else
+        }
+        else{
+           
             mostraLigacoesCarreira(c, FALSO);
+        }
     }
     else
     {
         _buffer = leNome();
+       
         if (verificaInversoOk(_buffer))
         {
             if (c == NULL)
             {
                 printf("invalid bus line\n");
+                free(s);
+                if (_buffer!= NULL)
+                    free(_buffer);
                 return;
             }
             mostraLigacoesCarreira(c, VERDADE);
@@ -406,9 +420,9 @@ void carreiras()
         else
             printf("incorrect sort option.\n");
         leAteFinalLinha(_buffer);
+        
     }
     free(s);
-    free(_buffer);
     
 }
 //Ligacao-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -448,6 +462,8 @@ void acrescentaLigacaoFim(Carreira* carreira, Ligacao* ligacao) {
         carreira->ligacoes = (Ligacao**) realloc(carreira->ligacoes, (numLigacoes+1) * sizeof(Ligacao));
         carreira->ligacoes[numLigacoes] = ligacao;
     }
+    carreira->custoTotal += ligacao->custo;
+    carreira->duracaoTotal += ligacao->duracao;
     carreira->numLigacoes++;
     
 }
@@ -467,6 +483,8 @@ void acrescentaLigacaoInicio(Carreira* carreira, Ligacao* ligacao) {
         }
         carreira->ligacoes[0] = ligacao;
     }
+    carreira->custoTotal += ligacao->custo;
+    carreira->duracaoTotal += ligacao->duracao;
     carreira->numLigacoes++;
 }
 
@@ -539,6 +557,7 @@ void adicionaLigacao(Ligacao** head, Ligacao** tail, Carreira* c, Paragem* pOrig
 */
 void ligacoes()
 {
+    printf("estou no ligacoes\n");
     char* nomeCarreira;
     char*  nomeOrigem;
     char* nomeDestino;
@@ -546,23 +565,26 @@ void ligacoes()
     Carreira* carreira;
     Paragem* pOrigem;
     Paragem* pDestino;
-
+    printf("inicializei tudo\n");
     leEspacos();
     nomeCarreira = leNome();
     leEspacos();
     nomeOrigem = leNome();
     leEspacos();
     nomeDestino = leNome();
-
+   
     //leNomesComando(nomeCarreira, nomeOrigem, nomeDestino);
     scanf("%lf%lf", &custo, &duracao);
-    leAteFinalLinha(_buffer);
-
+    
+    //leAteFinalLinha(_buffer);
     carreira = encontraCarreira(listaCarreiras,nomeCarreira);
-    if (carreira == NULL)
+    if (carreira == NULL){
+       
         printf("%s: no such line.\n", nomeCarreira);
+    }
     else
     {
+       
         pOrigem = encontraParagem(listaParagens, nomeOrigem);
         if (pOrigem == NULL)
             printf("%s: no such stop.\n", nomeOrigem);
@@ -576,6 +598,65 @@ void ligacoes()
             else
                 adicionaLigacao(&listaLigacoes, &tailListaLigacoes, carreira, pOrigem, pDestino, custo, duracao);
         }
+    }
+    free(nomeCarreira);
+    free(nomeOrigem);
+    free(nomeDestino);
+}
+
+void ordenaCarreiras(Carreira** carreiras, int numCarreiras) {
+    Carreira* c = NULL;
+    int i, j, houveTroca = VERDADE;
+    for (i = 0; houveTroca && i < numCarreiras-1; i++) {
+        houveTroca = FALSO;
+        c = carreiras;
+	for (j = 0; j < numCarreiras-1-i; j++) {
+	    if (strcmp(_carreiras[idCarreiras[j]].nome, _carreiras[idCarreiras[j+1]].nome) > 0) {
+	        int aux = idCarreiras[j];
+	        idCarreiras[j] = idCarreiras[j+1];
+		idCarreiras[j+1] = aux;
+		houveTroca = VERDADE;
+	    }
+	}
+    }
+}
+
+void intersecoes() {
+    int i, c, idCarreira, numCarreiras;
+
+    //leAteFinalLinha(_buffer);
+
+    for (i = 0; i < _numParagens; i++) {
+        numCarreiras = _paragens[i].numCarreiras;
+        if (numCarreiras > 1) {
+            printf("%s %d:", _paragens[i].nome, numCarreiras);
+            ordenaCarreiras(_paragens[i].idCarreiras, numCarreiras);
+            for (c = 0; c < numCarreiras; c++) {
+                idCarreira = _paragens[i].idCarreiras[c];
+                printf(" %s", _carreiras[idCarreira].nome);
+            }
+            printf("\n");
+        }
+    }
+}
+void intersecoes() {
+    Paragem* p = NULL;
+    int i, c, idCarreira, numCarreiras;
+
+    //leAteFinalLinha(_buffer);
+
+    while(p!= NULL){
+        numCarreiras = p->numCarreiras;
+        if (numCarreiras > 1) {
+            printf("%s %d:", p->nome, numCarreiras);
+            ordenaCarreiras(p->carreiras, numCarreiras);
+            for (c = 0; c < numCarreiras; c++) {
+                idCarreira = _paragens[i].idCarreiras[c];
+                printf(" %s", _carreiras[idCarreira].nome);
+            }
+            printf("\n");
+        }
+    }
     }
 }
 
