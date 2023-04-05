@@ -25,7 +25,7 @@ struct paragem
     char *nome;
     double latitude, longitude;
     Carreira** carreiras;
-    //int *idCarreiras;
+    //int *cs;
     int numCarreiras;
     Paragem *prev;
     Paragem *next;
@@ -34,7 +34,8 @@ struct paragem
 struct ligacao
 {
     Carreira* carreira;
-    Paragem* paragemOrigem, paragemDestino;
+    Paragem* paragemOrigem;
+    Paragem* paragemDestino;
     double custo, duracao;
     Ligacao *prev;
     Ligacao *next;
@@ -88,7 +89,7 @@ char* leNome()
             s = realloc(s, i + 1);
             s[i++] = c;
         }
-        ungetc(c, stdin);
+        
     }
     else
     {
@@ -156,9 +157,9 @@ void criaParagem(Paragem** head, Paragem** tail, char *nomeParagem, double latit
     strcpy(novaParagem->nome, nomeParagem);
     novaParagem->carreiras = NULL;
     novaParagem->next = NULL;
-    if (listaParagens == NULL){
+    if (*head == NULL) {
         novaParagem->prev = NULL;
-        listaParagens = novaParagem;
+        *head = novaParagem;
         *tail = novaParagem;
         printf("p esta vazio\n");
     }
@@ -166,8 +167,6 @@ void criaParagem(Paragem** head, Paragem** tail, char *nomeParagem, double latit
         novaParagem->prev = *tail;
         (*tail)->next = novaParagem;
         *tail = novaParagem;
-       
-        
     }
     
 }
@@ -217,7 +216,7 @@ void mostraCarreira(Carreira* c)
     if (numLigacoes > 0)
     { 
     printf("%s %s ", c->ligacoes[0]->paragemOrigem->nome,
-                     c->ligacoes[numLigacoes-1]->paragemDestino.nome);
+                     c->ligacoes[numLigacoes-1]->paragemDestino->nome);
     printf("%d ", numLigacoes+1);
     printf("%.2f ", c->custoTotal);
     printf("%.2f\n", c->duracaoTotal);
@@ -258,14 +257,14 @@ void mostraLigacoesCarreira(Carreira *c, int inverso)
             printf("%s, ", ligacao->paragemOrigem->nome);
         }
         ligacao = c->ligacoes[numLigacoes - 1];
-        printf("%s\n", ligacao->paragemDestino.nome);
+        printf("%s\n", ligacao->paragemDestino->nome);
     }
     else
     {
         for (i = numLigacoes - 1; i >= 0; i--)
         {   
             ligacao = c->ligacoes[i];
-            printf("%s, ", ligacao->paragemDestino.nome);
+            printf("%s, ", ligacao->paragemDestino->nome);
             
         }
         ligacao = c->ligacoes[0];
@@ -302,23 +301,24 @@ Carreira* encontraCarreira(Carreira* listaCarreiras, char nome[]) {
 
 
 
-/*Paragem *encontraParagemCarreira(Carreira* c, Paragem* p)
+int encontraParagemCarreira(Carreira* c, Paragem* p)
 {
-    int numLigacoes = _carreiras[idCarreira].numLigacoes;
-    int i, idLigacao;
+    int numLigacoes = c->numLigacoes;
+    int i;
+    Ligacao* ligacao = NULL;
 
     for (i = 0; i < numLigacoes; i++)
     {
-        idLigacao = _carreiras[idCarreira].idLigacoes[i];
-        if (_ligacoes[idLigacao].idOrigem == idParagem)
+        ligacao = c->ligacoes[i];
+        if (ligacao->paragemOrigem == p)
             return i;
     }
-    idLigacao = _carreiras[idCarreira].idLigacoes[numLigacoes - 1];
-    if (_ligacoes[idLigacao].idDestino == idParagem)
+    ligacao = c->ligacoes[numLigacoes - 1];
+    if (ligacao->paragemDestino == p)
         return numLigacoes;
     return NAO_ENCONTRADO;
 }
-Cria uma carreira nova. */
+
 
 void criaCarreira(Carreira** head, Carreira** tail, char nomeCarreira[])
 {
@@ -411,7 +411,173 @@ void carreiras()
     free(_buffer);
     
 }
+//Ligacao-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
+void criaLigacao(Ligacao** head, Ligacao** tail, Carreira* c,
+            Paragem* pOrigem, Paragem* pDestino, double custo, double duracao) {  
+
+    Ligacao* novaLigacao = (Ligacao*) malloc(sizeof(Ligacao));
+    novaLigacao->carreira = c;
+    novaLigacao->paragemOrigem = pOrigem;
+    novaLigacao->paragemDestino = pDestino;
+    novaLigacao->custo = custo;
+    novaLigacao->duracao = duracao;
+    if (*head == NULL) {
+        novaLigacao->prev = NULL;
+        *head = novaLigacao;
+        *tail = novaLigacao;
+    }
+    else {
+        novaLigacao->prev = *tail;
+        (*tail)->next = novaLigacao;
+        *tail = novaLigacao; 
+    }
+}
+
+/* Acrescenta uma nova ligação no fim de uma carreira. */
+
+void acrescentaLigacaoFim(Carreira* carreira, Ligacao* ligacao) {
+    if (carreira->ligacoes == NULL) {
+        carreira->ligacoes = (Ligacao**) malloc(sizeof(ligacao));
+        carreira->ligacoes[0] = ligacao;
+    }
+
+    else {
+        int numLigacoes = carreira->numLigacoes;
+        carreira->ligacoes = (Ligacao**) realloc(carreira->ligacoes, (numLigacoes+1) * sizeof(Ligacao));
+        carreira->ligacoes[numLigacoes] = ligacao;
+    }
+    carreira->numLigacoes++;
+    
+}
+/* Acrescenta uma nova ligação no início de uma carreira. */
+
+void acrescentaLigacaoInicio(Carreira* carreira, Ligacao* ligacao) {
+    
+    if (carreira->ligacoes == NULL) {
+        carreira->ligacoes = (Ligacao**) malloc(sizeof(Ligacao));
+        carreira->ligacoes[0] = ligacao;
+    }
+    else {
+        int numLigacoes = carreira->numLigacoes;
+        carreira->ligacoes = (Ligacao**) realloc(carreira->ligacoes, (numLigacoes+1) * sizeof(Ligacao));
+        for (int i = numLigacoes; i > 0; i--) {
+            carreira->ligacoes[i] = carreira->ligacoes[i-1];
+        }
+        carreira->ligacoes[0] = ligacao;
+    }
+    carreira->numLigacoes++;
+}
+
+void adicionaCarreiraParagem(Paragem* paragem, Carreira* carreira) {
+    int i;
+    for (i = 0; i < paragem->numCarreiras; i++) {
+        if (strcmp(paragem->carreiras[i]->nome, carreira->nome)) {
+            printf("AVISO: paragem ja associada a carreira.\n");
+            return;
+        }
+    }
+    paragem->carreiras = (Carreira**) realloc(paragem->carreiras, (paragem->numCarreiras+1) * sizeof(Carreira));
+    paragem->carreiras[paragem->numCarreiras] = carreira;
+    paragem->numCarreiras++;
+    /*
+    _paragens[idParagem].cs[_paragens[idParagem].numCarreiras] = c;
+    _paragens[idParagem].numCarreiras++;
+    */
+}
+
+void adicionaPrimeiraLigacao(Ligacao** head, Ligacao** tail, Carreira* c, Paragem* pOrigem, Paragem* pDestino, double custo, double duracao) {
+
+    adicionaCarreiraParagem(pOrigem, c);
+    if (pOrigem != pDestino)
+        adicionaCarreiraParagem(pDestino, c);
+    criaLigacao(head, tail, c, pOrigem, pDestino, custo, duracao);
+    acrescentaLigacaoFim(c, *tail);
+}
+
+void adicionaLigacao(Ligacao** head, Ligacao** tail, Carreira* c, Paragem* pOrigem, Paragem* pDestion,
+                     double custo, double duracao)
+{
+    int numLigacoesCarreira = c->numLigacoes;
+
+    if (numLigacoesCarreira == 0)
+        adicionaPrimeiraLigacao(&listaLigacoes, &tailListaLigacoes, c, pOrigem, pDestion,
+                                custo, duracao);
+    else
+    {
+        Ligacao* primeiraLigacao = *c->ligacoes;
+        Ligacao* ultimaLigacao = c->ligacoes[numLigacoesCarreira - 1];
+        if (pOrigem == ultimaLigacao->paragemDestino)
+        {
+            if (encontraParagemCarreira(c, pDestion) == NAO_ENCONTRADO)
+                adicionaCarreiraParagem(pDestion, c);
+            criaLigacao(head, tail, c, pOrigem, pDestion, custo, duracao);
+            acrescentaLigacaoFim(c, *tail);
+        }
+        else if (pDestion == ultimaLigacao->paragemOrigem)
+        {
+            if (encontraParagemCarreira(c, pOrigem) == NAO_ENCONTRADO)
+                adicionaCarreiraParagem(pOrigem, c);
+            criaLigacao(head, tail, c, pOrigem, pDestion, custo, duracao);
+            acrescentaLigacaoInicio(c, *tail);
+        }
+        else
+            printf("link cannot be associated with bus line.\n");
+    }
+}
+
+/*void leNomesComando(char nomeCarreira[], char nomeOrigem[], char nomeDestino[])
+{   
+    leEspacos();
+    leNome(nomeCarreira);
+    leEspacos();
+    leNome(nomeOrigem);
+    leEspacos();
+    leNome(nomeDestino);
+}
+*/
+void ligacoes()
+{
+    char* nomeCarreira;
+    char*  nomeOrigem;
+    char* nomeDestino;
+    double custo, duracao;
+    Carreira* carreira;
+    Paragem* pOrigem;
+    Paragem* pDestino;
+
+    leEspacos();
+    nomeCarreira = leNome();
+    leEspacos();
+    nomeOrigem = leNome();
+    leEspacos();
+    nomeDestino = leNome();
+
+    //leNomesComando(nomeCarreira, nomeOrigem, nomeDestino);
+    scanf("%lf%lf", &custo, &duracao);
+    leAteFinalLinha(_buffer);
+
+    carreira = encontraCarreira(listaCarreiras,nomeCarreira);
+    if (carreira == NULL)
+        printf("%s: no such line.\n", nomeCarreira);
+    else
+    {
+        pOrigem = encontraParagem(listaParagens, nomeOrigem);
+        if (pOrigem == NULL)
+            printf("%s: no such stop.\n", nomeOrigem);
+        else
+        {
+            pDestino = encontraParagem(listaParagens, nomeDestino);
+            if (pDestino == NULL)
+                printf("%s: no such stop.\n", nomeDestino);
+            else if (custo < 0.0 || duracao < 0.0)
+                printf("negative cost or duration.\n");
+            else
+                adicionaLigacao(&listaLigacoes, &tailListaLigacoes, carreira, pOrigem, pDestino, custo, duracao);
+        }
+    }
+}
 
 void apaga(){
     Paragem* p = NULL;
@@ -439,7 +605,7 @@ int main()
             paragens();
             break;
         case 'l':
-            
+            ligacoes();
             break;
         case 'i':
             
