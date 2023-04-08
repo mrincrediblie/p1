@@ -73,6 +73,9 @@ int leEspacos()
     ungetc(c, stdin);
     return 1;
 }
+
+
+
 char *leNome()
 {
     char *s = (char *)malloc(sizeof(char));
@@ -110,6 +113,7 @@ char *leNome()
     s[i++] = '\0';
     return s;
 }
+
 void leAteFinalLinha(char s[])
 {
     char c;
@@ -797,6 +801,8 @@ void eliminaLigacaoCarreira(Ligacao **head, Ligacao** tail, Carreira** carreiras
     }
 }
 */
+
+
 void apagaParagem(Paragem** paragens, Carreira** carreiras){
     char *nome = NULL;
     Paragem *aux = NULL;
@@ -827,6 +833,7 @@ void apagaParagem(Paragem** paragens, Carreira** carreiras){
     free(nome);
 }
 
+/*Comando 'a' ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
 
 
