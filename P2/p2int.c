@@ -839,14 +839,14 @@ void apagaParagem(Paragem** paragens, Carreira** carreiras){
 
 void apaga()
 {
-    Paragem *p = NULL;
+    Paragem *p = listaParagens;
     while (p != NULL)
     {
-        p = listaParagens;
-        if (p->next == NULL)
-            free(p);
-        listaParagens = listaParagens->next;
+        listaParagens = p->next;
+        free(p->nome);
+        free(p->carreiras);
         free(p);
+        p = listaParagens;
     }
 }
 int main()
