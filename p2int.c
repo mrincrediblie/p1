@@ -1,3 +1,4 @@
+/* iaed-23 - ist1103580 - project2 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,7 +23,7 @@ struct paragem
     char *nome;
     double latitude, longitude;
     Carreira **carreiras;
-    
+
     int numCarreiras;
     Paragem *prev;
     Paragem *next;
@@ -73,8 +74,6 @@ int leEspacos()
     ungetc(c, stdin);
     return 1;
 }
-
-
 
 char *leNome()
 {
@@ -162,7 +161,8 @@ Paragem *encontraParagem(Paragem *listaParagens, char *nome)
 
 void criaParagem(Paragem **head, Paragem **tail, char *nomeParagem, double latitude, double longitude)
 {
-    Paragem *novaParagem = (Paragem *)malloc(sizeof(Paragem));
+    
+    Paragem *novaParagem = (Paragem *) malloc(sizeof(Paragem));
     novaParagem->latitude = latitude;
     novaParagem->longitude = longitude;
     novaParagem->numCarreiras = 0;
@@ -210,8 +210,10 @@ void paragens()
     {
         double latitude, longitude;
         scanf("%lf%lf", &latitude, &longitude);
-        if (encontraParagem(listaParagens, s) == NULL)
+        if (encontraParagem(listaParagens, s) == NULL){
             criaParagem(&listaParagens, &tailListaParagens, s, latitude, longitude);
+           
+        }
         else
             printf("%s: stop already exists.\n", s);
         /*leAteFinalLinha(_buffer);*/
@@ -222,13 +224,13 @@ void paragens()
 /* carreiras ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
 void mostraCarreira(Carreira *c)
-{   
+{
     int numLigacoes = c->numLigacoes;
 
     printf("%s ", c->nome);
     if (numLigacoes > 0)
     {
-        
+
         printf("%s %s ", c->ligacoes[0]->paragemOrigem->nome,
                c->ligacoes[numLigacoes - 1]->paragemDestino->nome);
         printf("%d ", numLigacoes + 1);
@@ -284,7 +286,7 @@ void listaAsCarreiras(Carreira *listaCarreiras)
     }
 }
 
-Carreira *encontraCarreira(Carreira *listaCarreiras, char nome[])
+Carreira *encontraCarreira(Carreira *listaCarreiras, char *nome)
 {
     Carreira *c = listaCarreiras;
     while (c != NULL)
@@ -440,6 +442,36 @@ void criaLigacao(Ligacao **head, Ligacao **tail, Carreira *c,
     }
 }
 
+Ligacao* encontraLigacao(Ligacao **head, Carreira *c, Paragem *pOrigem, Paragem *pDestino, double custo, double duracao) {
+    Ligacao* l = *head;
+    while(l != NULL){
+        if ((l->carreira == c) && (l->paragemOrigem == pOrigem) && (l->paragemDestino == pDestino) && (l->custo == custo) && (l->duracao == duracao)) {
+            return l;
+        }
+        l = l->next;
+    }
+    return NULL;
+}
+void apagaLigacao(Ligacao **ligacoes, Ligacao* ligacao){
+    Ligacao* aux = NULL; aux = ligacao;
+    if (aux != NULL)
+    {
+        if (aux->prev != NULL)
+        {
+            aux->prev->next = aux->next;
+        }
+        else
+        {
+            *ligacoes = aux->next;
+        }
+        if (aux->next != NULL)
+        {
+            aux->next->prev = aux->prev;
+        }
+        
+        free(aux);
+    }
+}
 /* Acrescenta uma nova ligação no fim de uma carreira. */
 
 void acrescentaLigacaoFim(Carreira *carreira, Ligacao *ligacao)
@@ -680,9 +712,10 @@ void removeLigacoesComCarreira(Ligacao **ligacoes, Carreira *carreira)
     free(l);
 }
 
-void apagaCarreira(Carreira **carreiras, Ligacao **ligacoes, Paragem **paragens)
-{   char *nome = NULL;
-    Carreira *aux = NULL;
+void apagaCarreira(Carreira **carreiras, Carreira ** tailCarreiras, Ligacao **ligacoes, Paragem **paragens)
+{
+    char *nome = NULL;
+    Carreira *aux = (Carreira*) malloc(sizeof(Carreira));
     leEspacos();
     nome = leNome();
     aux = encontraCarreira(*carreiras, nome);
@@ -700,6 +733,9 @@ void apagaCarreira(Carreira **carreiras, Ligacao **ligacoes, Paragem **paragens)
         {
             aux->next->prev = aux->prev;
         }
+        else {
+            *tailCarreiras = aux->prev;
+        }
         removeLigacoesComCarreira(ligacoes, aux);
         removeCarreiraParagens(aux, *paragens);
         free(aux);
@@ -709,110 +745,140 @@ void apagaCarreira(Carreira **carreiras, Ligacao **ligacoes, Paragem **paragens)
     free(nome);
 }
 
-
 /*comando 'e' -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
-void eliminaLigacaoCarreira(Carreira** carreiras, Paragem* p){
-    Carreira* c = *carreiras;
-    int i, j;
-    while(c != NULL){
-        int numLigacoes = c->numLigacoes;
-        for(i = 0; i < numLigacoes; i++){
-            if((strcmp(c->ligacoes[i]->paragemDestino->nome, p->nome) == 0)||
-               (strcmp(c->ligacoes[i]->paragemOrigem->nome, p->nome)) == 0) {
-                c->custoTotal-= c->ligacoes[i]->custo;
-                c->duracaoTotal-= c->ligacoes[i]->duracao;
-                for (j = i; j < numLigacoes - 1; j++)
-                {
-                    c->ligacoes[j] = c->ligacoes[j + 1];
-                }
-                c->numLigacoes--;
-                numLigacoes --;
-                
-            }
-        }
-        c = c->next;
-       
-    }
-
-}
 /*
-void eliminaLigacaoCarreira(Carreira** carreiras, Paragem* p){
-    Carreira* c = *carreiras;
+void eliminaLigacaoCarreira(Carreira **carreiras, Paragem *p)
+{
+    Carreira *c = *carreiras;
     int i, j;
-    while(c != NULL){
+    while (c != NULL)
+    {
         int numLigacoes = c->numLigacoes;
-        for(i = 0; i < numLigacoes; i++){
-            if((strcmp(c->ligacoes[i]->paragemDestino->nome, p->nome) == 0)||
-               (strcmp(c->ligacoes[i]->paragemOrigem->nome, p->nome)) == 0) {
-                c->custoTotal-= c->ligacoes[i]->custo;
-                c->duracaoTotal-= c->ligacoes[i]->duracao;
-                free(c->ligacoes[i]);
-                for (int j = i; j < numLigacoes - 1; j++)
-                {
-                    c->ligacoes[j] = c->ligacoes[j + 1];
-                }
-                c->numLigacoes--;
-                numLigacoes --;
-            }
-        }
-        c = c->next;
-    }
-}
-*/
-/*
-void eliminaLigacaoCarreira(Ligacao **head, Ligacao** tail, Carreira** carreiras, Paragem* p){
-    Carreira* c = *carreiras;
-    int i, j;
-    while(c != NULL){
-        int numLigacoes = c->numLigacoes;
-        for(i = 0; i < numLigacoes; i++){
-            if((strcmp(c->ligacoes[i]->paragemDestino->nome, p->nome) == 0) ||
-               (strcmp(c->ligacoes[i]->paragemOrigem->nome, p->nome) == 0)) {
-                c->custoTotal -= c->ligacoes[i]->custo;
-                c->duracaoTotal -= c->ligacoes[i]->duracao;
-                if(numLigacoes == 1){
-                    free(c->ligacoes[i]);
-                    c->numLigacoes--;
-                } else if(i == 0){
-                    
 
-                    c->ligacoes[i] = criaLigacao(head, tail, c, c->ligacoes[i]->paragemDestino, c->ligacoes[i+1]->paragemDestino, c->ligacoes[i]->custo, c->ligacoes[i]->duracao);
-                    for(j = i+1; j < numLigacoes-1; j++){
-                        c->ligacoes[j] = c->ligacoes[j+1];
-                    }
-                    c->numLigacoes--;
-                } else if(i == numLigacoes-1){
-                
-                    c->ligacoes[i-1] = criaLigacao(head, tail, c, c->ligacoes[i-1]->paragemOrigem, c->ligacoes[i]->paragemOrigem, c->ligacoes[i]->custo, c->ligacoes[i]->duracao);
-                    c->numLigacoes--;
-                } else {
-                   
-                    c->ligacoes[i-1] = criaLigacao(head, tail, c, c->ligacoes[i-1]->paragemOrigem, c->ligacoes[i+1]->paragemDestino, c->ligacoes[i-1]->custo + c->ligacoes[i]->custo, c->ligacoes[i-1]->duracao + c->ligacoes[i]->duracao);
-                    for(j = i+1; j < numLigacoes-1; j++){
-                        c->ligacoes[j] = c->ligacoes[j+1];
-                    }
-                    c->numLigacoes--;
-                }
+        if (numLigacoes == 1)
+        {
+            if ((strcmp(c->ligacoes[i]->paragemDestino->nome, p->nome) == 0) ||
+                (strcmp(c->ligacoes[i]->paragemOrigem->nome, p->nome)) == 0)
+            {
+                c->ligacoes[i] = NULL;
                 numLigacoes--;
             }
         }
+        
+        else
+        {
+            i = 0;
+            while (i < numLigacoes)
+            {   
+                if ((strcmp(c->ligacoes[i]->paragemOrigem->nome, p->nome) == 0) && (i== 0)) {
+                    //apagar essa primeira ligacao 
+                    //i =0
+                }
+                elif ((strcmp(c->ligacoes[i]->paragemDestino->nome, p->nome) == 0) && ((i + 1) != numLigacoes)) {
+                    // criar uma ligacao entre ligacao[i]->paragemOrigem e ligacao[i]->paagemDestino, reajustar o vetor apagando essas duas ligacoes e pondo essa nova ligacao no lugar 
+                    //i =0
+                }
+                elif ((strcmp(c->ligacoes[i]->paragemDestino->nome, p->nome) == 0) && ((i + 1) == numLigacoes)) {
+                    // apagar essa ultima ligacao
+                    //i =0
+                }
+                i++;
+               
+                
+               
+            }
+        }
         c = c->next;
     }
 }
+
+ 
+                if ((strcmp(c->ligacoes[i]->paragemDestino->nome, p->nome) == 0) ||
+                    (strcmp(c->ligacoes[i]->paragemOrigem->nome, p->nome)) == 0)
+                {
+                    c->custoTotal -= c->ligacoes[i]->custo;
+                    c->duracaoTotal -= c->ligacoes[i]->duracao;
+                    for (j = i; j < numLigacoes - 1; j++)
+                    {
+                        c->ligacoes[j] = c->ligacoes[j + 1];
+                    }
+                    c->numLigacoes--;
+                    numLigacoes--;
+                }
 */
 
+void eliminaLigacaoCarreira(Carreira **carreiras, Paragem *p, Ligacao** ligacoes, Ligacao** tailLigacoes)
+{
+    Carreira *c = *carreiras;
+    int i, j;
+    while (c != NULL)
+    {
+        int numLigacoes = c->numLigacoes;
+        i = 0;
 
-void apagaParagem(Paragem** paragens, Carreira** carreiras){
+        while (i < numLigacoes)
+        {   
+            if ((strcmp(c->ligacoes[i]->paragemOrigem->nome, p->nome) == 0) && (i==0)) {
+                /*apagar a primeira ligação
+                free(c->ligacoes[i]);*/
+                c->custoTotal-= c->ligacoes[i]->custo;
+                c->duracaoTotal-= c->ligacoes[i]->duracao;
+
+                apagaLigacao(ligacoes, c->ligacoes[i]);
+                for (j = 1; j < numLigacoes; j++) {
+                    c->ligacoes[j - 1] = c->ligacoes[j];
+                }
+                c->numLigacoes--;
+                numLigacoes--;
+            }
+            else if ((strcmp(c->ligacoes[i]->paragemDestino->nome, p->nome) == 0) && ((i + 1) != numLigacoes)) {
+                /*criar uma nova ligação e apagar as duas antigas*/
+                Ligacao *novaLigacao = (Ligacao*) malloc(sizeof(Ligacao));
+                double newCusto = (c->ligacoes[i]->custo + c->ligacoes[i+1]->custo);
+                double newDuracao = (c->ligacoes[i]->duracao + c->ligacoes[i+1]->duracao);
+                criaLigacao(ligacoes, tailLigacoes, c, c->ligacoes[i]->paragemOrigem, c->ligacoes[i + 1]->paragemDestino, newCusto, newDuracao);
+                novaLigacao = encontraLigacao(ligacoes, c, c->ligacoes[i]->paragemOrigem, c->ligacoes[i + 1]->paragemDestino, newCusto, newDuracao);
+                apagaLigacao(ligacoes, c->ligacoes[i]);
+                apagaLigacao(ligacoes, c->ligacoes[i+1]);
+                /*free(c->ligacoes[i]);
+                free(c->ligacoes[i + 1]);*/
+                c->ligacoes[i] = novaLigacao;
+                for (j = i + 2; j < numLigacoes; j++) {
+                    c->ligacoes[j - 1] = c->ligacoes[j];
+                }
+                c->numLigacoes -= 1;
+                
+                numLigacoes -= 1;
+            }
+            else if ((strcmp(c->ligacoes[i]->paragemDestino->nome, p->nome) == 0) && ((i + 1) == numLigacoes)) {
+                /*apagar a última ligação
+                free(c->ligacoes[i]);*/
+                c->custoTotal-= c->ligacoes[i]->custo;
+                c->duracaoTotal-= c->ligacoes[i]->duracao;
+                apagaLigacao(ligacoes, c->ligacoes[i]);
+                c->numLigacoes--;
+                numLigacoes--;
+            }
+            else {
+                i++;
+            }   
+        }
+        c = c->next;
+    }
+}
+
+
+void apagaParagem(Paragem **paragens, Paragem** tailParagens, Carreira **carreiras, Ligacao** ligacoes, Ligacao** tailLigacoes)
+{
     char *nome = NULL;
-    Paragem *aux = NULL;
+    Paragem *aux = (Paragem*) malloc(sizeof(Paragem));
     leEspacos();
     nome = leNome();
     aux = encontraParagem(*paragens, nome);
 
     if (aux != NULL)
-    {   
-        eliminaLigacaoCarreira(carreiras, aux);
+    {
+        eliminaLigacaoCarreira(carreiras, aux, ligacoes, tailLigacoes);
         if (aux->prev != NULL)
         {
             aux->prev->next = aux->next;
@@ -825,7 +891,10 @@ void apagaParagem(Paragem** paragens, Carreira** carreiras){
         {
             aux->next->prev = aux->prev;
         }
-        
+        else {
+            *tailParagens = aux->prev;
+        }
+
         free(aux);
     }
     else
@@ -835,9 +904,7 @@ void apagaParagem(Paragem** paragens, Carreira** carreiras){
 
 /*Comando 'a' ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
-
-
-void apaga()
+void apagaParagens()
 {
     Paragem *p = listaParagens;
     while (p != NULL)
@@ -848,6 +915,37 @@ void apaga()
         free(p);
         p = listaParagens;
     }
+}
+
+void apagaCarreiras(){
+    Carreira *c = listaCarreiras;
+    while (c != NULL)
+    {
+        listaCarreiras = c->next;
+        free(c->nome);
+        free(c->ligacoes);
+        free(c);
+        c = listaCarreiras;
+    }
+
+}
+void apagaLigacoes(){
+    Ligacao* l = listaLigacoes;
+    while (l != NULL)
+    {
+        listaLigacoes = l->next;
+        
+        free(l);
+        l = listaLigacoes;
+    }
+
+}
+
+void apagaSistema(){
+    apagaParagens();
+    apagaCarreiras();
+    apagaLigacoes();
+
 }
 int main()
 {
@@ -871,13 +969,16 @@ int main()
             intersecoes(&listaParagens);
             break;
         case 'q':
-            apaga();
+            apagaSistema();
             break;
         case 'r':
-            apagaCarreira(&listaCarreiras, &listaLigacoes, &listaParagens);
+            apagaCarreira(&listaCarreiras, &tailListaCarreiras, &listaLigacoes, &listaParagens);
             break;
         case 'e':
-            apagaParagem(&listaParagens, &listaCarreiras);
+            apagaParagem(&listaParagens, &tailListaParagens, &listaCarreiras, &listaLigacoes, &tailListaLigacoes);
+            break;
+        case 'a':
+            apagaSistema();
             break;
         default:
             /* Ignorar linhas em branco */
