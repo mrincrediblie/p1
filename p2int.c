@@ -462,8 +462,8 @@ Ligacao* encontraLigacao(Ligacao **head, Carreira *c, Paragem *pOrigem, Paragem 
     return NULL;
 }
 void apagaLigacao(Ligacao **ligacoes, Ligacao **tailLigacoes, Ligacao* ligacao){
-    Ligacao* aux = NULL; 
-    aux = ligacao;
+    Ligacao* aux = ligacao; 
+    
     if (aux != NULL)
     {
         if (aux->prev != NULL)
@@ -482,7 +482,7 @@ void apagaLigacao(Ligacao **ligacoes, Ligacao **tailLigacoes, Ligacao* ligacao){
             *tailLigacoes = aux->prev;
         }
         
-        
+    
     free(aux);
     }
     printf("apaguei a ligacao\n");
@@ -844,7 +844,7 @@ void eliminaLigacaoCarreira(Carreira **carreiras, Paragem *p, Ligacao** ligacoes
                 c->custoTotal-= c->ligacoes[i]->custo;
                 c->duracaoTotal-= c->ligacoes[i]->duracao;
                 printf("estou dentro do antes do apagaLigacao\n");
-                apagaLigacao(ligacoes, tailLigacoes, c->ligacoes[i]);
+                /*apagaLigacao(ligacoes, tailLigacoes, c->ligacoes[i]);*/
                 c->ligacoes[i] = NULL;
                 printf("estou depois do apagaLigacao\n");
                 for (j = 1; j < numLigacoes; j++) {
@@ -879,8 +879,8 @@ void eliminaLigacaoCarreira(Carreira **carreiras, Paragem *p, Ligacao** ligacoes
                 printf("estou depois do cria ligacao\n");
                 novaLigacao = encontraLigacao(ligacoes, c, c->ligacoes[i]->paragemOrigem, c->ligacoes[i + 1]->paragemDestino, newCusto, newDuracao);
                 printf("estou depois do encontraligacao\n");
-                apagaLigacao(ligacoes, tailLigacoes, c->ligacoes[i]);
-                apagaLigacao(ligacoes, tailLigacoes, c->ligacoes[i+1]);
+                /*apagaLigacao(ligacoes, tailLigacoes, c->ligacoes[i]);
+                apagaLigacao(ligacoes, tailLigacoes, c->ligacoes[i+1]);*/
                 printf("estou depois do apagaLigacoes\n");
                 c->ligacoes[i] = NULL;
                 c->ligacoes[i + 1] = NULL;
@@ -907,7 +907,7 @@ void eliminaLigacaoCarreira(Carreira **carreiras, Paragem *p, Ligacao** ligacoes
                 c->custoTotal-= c->ligacoes[i]->custo;
                 c->duracaoTotal-= c->ligacoes[i]->duracao;
                 printf("estou dentro do segundo else if\n");
-                apagaLigacao(ligacoes, tailLigacoes, c->ligacoes[i]);
+                /*apagaLigacao(ligacoes, tailLigacoes, c->ligacoes[i]);*/
                 c->ligacoes[i] = NULL;
                 c->numLigacoes--;
                 numLigacoes--;
@@ -1055,4 +1055,3 @@ int main()
     } while (c != 'q');
     return 0;
 }
-
