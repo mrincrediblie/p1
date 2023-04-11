@@ -77,7 +77,7 @@ int leEspacos()
 
 char *leNome()
 {
-    char *s = (char *)malloc(sizeof(char));
+    char *s = (char *) malloc(sizeof(char));
     int i = 0, c;
     s[0] = getchar();
     if (s[0] != '"')
@@ -134,7 +134,9 @@ void mostraParagem(Paragem *paragem)
 
 void listaAsParagens(Paragem *listaParagens)
 {
+    
     Paragem *paragem = listaParagens;
+    printf("estou no inicio do listaAsParagens\n");
     while (paragem != NULL)
     {
         mostraParagem(paragem);
@@ -188,9 +190,11 @@ void criaParagem(Paragem **head, Paragem **tail, char *nomeParagem, double latit
 
 void paragens()
 {
+    
     char *s = NULL;
     Paragem *p = NULL;
     int fimLinha = leEspacos();
+    printf("estou no inicio do paragens\n");
 
     if (!fimLinha)
     {
@@ -443,8 +447,13 @@ void criaLigacao(Ligacao **head, Ligacao **tail, Carreira *c,
 }
 
 Ligacao* encontraLigacao(Ligacao **head, Carreira *c, Paragem *pOrigem, Paragem *pDestino, double custo, double duracao) {
-    Ligacao* l = *head;
+    Ligacao* l = NULL;
+    printf("estou dentro do encontraLigacao\n");
+    l = *head;
+    
     while(l != NULL){
+        printf("%s %s\n", l->paragemOrigem->nome, l->paragemDestino->nome);
+        printf("estou dentro do ciclo\n");
         if ((l->carreira == c) && (l->paragemOrigem == pOrigem) && (l->paragemDestino == pDestino) && (l->custo == custo) && (l->duracao == duracao)) {
             return l;
         }
@@ -452,8 +461,9 @@ Ligacao* encontraLigacao(Ligacao **head, Carreira *c, Paragem *pOrigem, Paragem 
     }
     return NULL;
 }
-void apagaLigacao(Ligacao **ligacoes, Ligacao* ligacao){
-    Ligacao* aux = NULL; aux = ligacao;
+void apagaLigacao(Ligacao **ligacoes, Ligacao **tailLigacoes, Ligacao* ligacao){
+    Ligacao* aux = NULL; 
+    aux = ligacao;
     if (aux != NULL)
     {
         if (aux->prev != NULL)
@@ -468,9 +478,14 @@ void apagaLigacao(Ligacao **ligacoes, Ligacao* ligacao){
         {
             aux->next->prev = aux->prev;
         }
+        else {
+            *tailLigacoes = aux->prev;
+        }
         
-        free(aux);
+        
+    free(aux);
     }
+    printf("apaguei a ligacao\n");
 }
 /* Acrescenta uma nova ligação no fim de uma carreira. */
 
@@ -688,7 +703,7 @@ void removeCarreiraParagens(Carreira *carreira, Paragem *paragens)
     }
 }
 
-void removeLigacoesComCarreira(Ligacao **ligacoes, Carreira *carreira)
+void removeLigacoesComCarreira(Ligacao **ligacoes, Ligacao ** tailLigacoes, Carreira *carreira)
 {
     Ligacao *l = *ligacoes;
     while (l != NULL)
@@ -707,15 +722,19 @@ void removeLigacoesComCarreira(Ligacao **ligacoes, Carreira *carreira)
             {
                 l->next->prev = l->prev;
             }
+            else {
+            *tailLigacoes = l->prev;
+        }
+            
         }
     }
     free(l);
 }
 
-void apagaCarreira(Carreira **carreiras, Carreira ** tailCarreiras, Ligacao **ligacoes, Paragem **paragens)
+void apagaCarreira(Carreira **carreiras, Carreira ** tailCarreiras, Ligacao **ligacoes, Ligacao **tailLigacoes, Paragem **paragens)
 {
     char *nome = NULL;
-    Carreira *aux = (Carreira*) malloc(sizeof(Carreira));
+    Carreira *aux = NULL;
     leEspacos();
     nome = leNome();
     aux = encontraCarreira(*carreiras, nome);
@@ -736,7 +755,7 @@ void apagaCarreira(Carreira **carreiras, Carreira ** tailCarreiras, Ligacao **li
         else {
             *tailCarreiras = aux->prev;
         }
-        removeLigacoesComCarreira(ligacoes, aux);
+        removeLigacoesComCarreira(ligacoes, tailLigacoes, aux);
         removeCarreiraParagens(aux, *paragens);
         free(aux);
     }
@@ -819,51 +838,99 @@ void eliminaLigacaoCarreira(Carreira **carreiras, Paragem *p, Ligacao** ligacoes
         while (i < numLigacoes)
         {   
             if ((strcmp(c->ligacoes[i]->paragemOrigem->nome, p->nome) == 0) && (i==0)) {
-                /*apagar a primeira ligação
-                free(c->ligacoes[i]);*/
+                printf("estou dentro do if\n");
+                /*apagar a primeira ligação*/
+                
                 c->custoTotal-= c->ligacoes[i]->custo;
                 c->duracaoTotal-= c->ligacoes[i]->duracao;
-
-                apagaLigacao(ligacoes, c->ligacoes[i]);
+                printf("estou dentro do antes do apagaLigacao\n");
+                apagaLigacao(ligacoes, tailLigacoes, c->ligacoes[i]);
+                c->ligacoes[i] = NULL;
+                printf("estou depois do apagaLigacao\n");
                 for (j = 1; j < numLigacoes; j++) {
                     c->ligacoes[j - 1] = c->ligacoes[j];
                 }
+                c->ligacoes[numLigacoes - 1] = NULL;
                 c->numLigacoes--;
                 numLigacoes--;
+                /*
+                if (numLigacoes > 0){
+                    
+                    if ((c->ligacoes = realloc(c->ligacoes, numLigacoes)) == NULL)
+                        printf("Erro ao alocar memoria\n");
+                    
+                }
+                else
+                    free(c->ligacoes);*/
+                if (numLigacoes == 0)
+                    free(c->ligacoes);
+                printf("estou a sair do segundo else if\n");
+                printf("estou a sair do if\n");
             }
             else if ((strcmp(c->ligacoes[i]->paragemDestino->nome, p->nome) == 0) && ((i + 1) != numLigacoes)) {
+                
                 /*criar uma nova ligação e apagar as duas antigas*/
-                Ligacao *novaLigacao = (Ligacao*) malloc(sizeof(Ligacao));
+                Ligacao *novaLigacao = NULL;
+                
                 double newCusto = (c->ligacoes[i]->custo + c->ligacoes[i+1]->custo);
                 double newDuracao = (c->ligacoes[i]->duracao + c->ligacoes[i+1]->duracao);
+                printf("estou dentro do primeiro else if\n");
                 criaLigacao(ligacoes, tailLigacoes, c, c->ligacoes[i]->paragemOrigem, c->ligacoes[i + 1]->paragemDestino, newCusto, newDuracao);
+                printf("estou depois do cria ligacao\n");
                 novaLigacao = encontraLigacao(ligacoes, c, c->ligacoes[i]->paragemOrigem, c->ligacoes[i + 1]->paragemDestino, newCusto, newDuracao);
-                apagaLigacao(ligacoes, c->ligacoes[i]);
-                apagaLigacao(ligacoes, c->ligacoes[i+1]);
-                /*free(c->ligacoes[i]);
-                free(c->ligacoes[i + 1]);*/
+                printf("estou depois do encontraligacao\n");
+                apagaLigacao(ligacoes, tailLigacoes, c->ligacoes[i]);
+                apagaLigacao(ligacoes, tailLigacoes, c->ligacoes[i+1]);
+                printf("estou depois do apagaLigacoes\n");
+                c->ligacoes[i] = NULL;
+                c->ligacoes[i + 1] = NULL;
                 c->ligacoes[i] = novaLigacao;
                 for (j = i + 2; j < numLigacoes; j++) {
                     c->ligacoes[j - 1] = c->ligacoes[j];
                 }
+                c->ligacoes[numLigacoes - 1] = NULL;
+
+                
                 c->numLigacoes -= 1;
                 
                 numLigacoes -= 1;
+                /*if ((c->ligacoes = realloc(c->ligacoes, numLigacoes)) == NULL)
+                    printf("erro ao realocar memoria\n");
+                */
+                printf("estou a sair do primeiro else if\n");
+                printf("estou a sair do primeiro else if\n");
             }
             else if ((strcmp(c->ligacoes[i]->paragemDestino->nome, p->nome) == 0) && ((i + 1) == numLigacoes)) {
-                /*apagar a última ligação
-                free(c->ligacoes[i]);*/
+                
+                /*apagar a última ligação*/
+                
                 c->custoTotal-= c->ligacoes[i]->custo;
                 c->duracaoTotal-= c->ligacoes[i]->duracao;
-                apagaLigacao(ligacoes, c->ligacoes[i]);
+                printf("estou dentro do segundo else if\n");
+                apagaLigacao(ligacoes, tailLigacoes, c->ligacoes[i]);
+                c->ligacoes[i] = NULL;
                 c->numLigacoes--;
                 numLigacoes--;
+                /*
+                if (numLigacoes > 0){
+
+                    if ((c->ligacoes = realloc(c->ligacoes, numLigacoes)) == NULL)
+                        printf("Erro ao alocar memoria\n");
+                }*/
+                if (numLigacoes == 0)
+                    free(c->ligacoes);
+                printf("estou a sair do segundo else if\n");
+                
+
             }
             else {
+                printf("estou dentro do else\n");
                 i++;
             }   
         }
+        printf("estou antes do c = c->next;\n");
         c = c->next;
+        printf("estou depois do c = c->next\n");
     }
 }
 
@@ -871,7 +938,7 @@ void eliminaLigacaoCarreira(Carreira **carreiras, Paragem *p, Ligacao** ligacoes
 void apagaParagem(Paragem **paragens, Paragem** tailParagens, Carreira **carreiras, Ligacao** ligacoes, Ligacao** tailLigacoes)
 {
     char *nome = NULL;
-    Paragem *aux = (Paragem*) malloc(sizeof(Paragem));
+    Paragem *aux = NULL;
     leEspacos();
     nome = leNome();
     aux = encontraParagem(*paragens, nome);
@@ -969,10 +1036,10 @@ int main()
             intersecoes(&listaParagens);
             break;
         case 'q':
-            apagaSistema();
+            /*apagaSistema();*/
             break;
         case 'r':
-            apagaCarreira(&listaCarreiras, &tailListaCarreiras, &listaLigacoes, &listaParagens);
+            apagaCarreira(&listaCarreiras, &tailListaCarreiras, &listaLigacoes,&tailListaLigacoes, &listaParagens);
             break;
         case 'e':
             apagaParagem(&listaParagens, &tailListaParagens, &listaCarreiras, &listaLigacoes, &tailListaLigacoes);
@@ -988,3 +1055,4 @@ int main()
     } while (c != 'q');
     return 0;
 }
+
